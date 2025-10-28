@@ -21,7 +21,7 @@ public class SecurityConfig {
 		 http
          .csrf(csrf -> csrf.disable()) // Disable CSRF for REST APIs
          .authorizeHttpRequests(auth -> auth
-             .requestMatchers("/api/shorten", "/api/r/**").permitAll() // Allow public access to these endpoints
+             .requestMatchers("/api/shorten", "/api/r/**", "/api/qrcode/**").permitAll() // Allow public access to these endpoints
              .anyRequest().authenticated() // Everything else requires auth
          )
          .httpBasic(Customizer.withDefaults()); // Or use JWT, etc.

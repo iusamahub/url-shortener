@@ -4,15 +4,18 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+
 import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import java.io.ByteArrayOutputStream;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.url_shotern.entity.*;
 import com.example.url_shotern.service.ShortUrlService;
@@ -30,6 +33,7 @@ public class ShortUrlController {
 	
 	record ShortenRequest(String originalUrl) {}
     record ShortenResponse(String shortUrl, String originalUrl) {}
+    // comment
 	
 //	@PostMapping("/shorten")
 //    public ResponseEntity<?> shortenUrl(@RequestBody Map<String, String> body) {
@@ -50,7 +54,7 @@ public class ShortUrlController {
 	    }
 
 	    @GetMapping("/r/{token}")
-	    public ResponseEntity<Void> redirect(@PathVariable String token) {
+	    public ResponseEntity<Void> redirect(@PathVariable("token") String token) {
 	        System.out.println("Handled by port: " + serverPort);
 
 	        return shortUrlService.findByShort(token)
@@ -58,6 +62,36 @@ public class ShortUrlController {
 	                .location(URI.create(m.getOriginalUrl()))
 	                .body((Void) null))
 	                .orElse(ResponseEntity.notFound().build());
+	    }
+	    
+
+	    @GetMapping("/qrcode/{token}")
+	    public ResponseEntity<byte[]> qrcode(@PathVariable("token") String token,
+	                                         @RequestHeader(value = "Host", required = false) String host,
+	                                         @RequestParam(value = "size", defaultValue = "300") int size) {
+	    	System.out.println("inside qrcode");
+	        String baseHost = (host == null || host.isBlank()) ? "localhost:8081" : host;
+	        return shortUrlService.findByShort(token)
+	                .map(m -> {
+	                    try {
+	                        String shortLink = "http://" + baseHost + "/r/" + m.getShortUrl();
+	                        byte[] png = generateQrPng(shortLink, size);
+	                        HttpHeaders headers = new HttpHeaders();
+	                        headers.set("Content-Type", "image/png");
+	                        return ResponseEntity.ok().headers(headers).body(png);
+	                    } catch (Exception e) {
+	                        return ResponseEntity.status(500).<byte[]>build();
+	                    }
+	                })
+	                .orElse(ResponseEntity.notFound().build());
+	    }
+	    
+	    private byte[] generateQrPng(String text, int size) throws Exception {
+	        BitMatrix bitMatrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size);
+	        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+	            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", baos);
+	            return baos.toByteArray();
+	        }
 	    }
 	
 }
