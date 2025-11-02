@@ -40,6 +40,12 @@ public class ShortUrlService {
 
     public ShortUrl shorten(String originalUrl, String baseHost) {
         // try to generate token and ensure uniqueness
+    	Optional<ShortUrl> existing = shortUrlDao.findByOriginalUrl(originalUrl);
+        if (existing.isPresent()) {
+            // Return existing record without regenerating
+            return existing.get();
+        }
+        
         String token = generateShortUrlToken(originalUrl + System.currentTimeMillis());
         String shortUrl = token;
         // collision handling: if exists, append timestamp and regenerate few times

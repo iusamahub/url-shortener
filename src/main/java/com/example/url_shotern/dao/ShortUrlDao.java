@@ -6,5 +6,7 @@ import java.util.Optional;
 public interface ShortUrlDao extends JpaRepository<ShortUrl, Long> {
 	
     Optional<ShortUrl> findByShortUrl(String shortUrl);
+    
+    Optional<ShortUrl> findByOriginalUrl(String originalUrl);
 
 }

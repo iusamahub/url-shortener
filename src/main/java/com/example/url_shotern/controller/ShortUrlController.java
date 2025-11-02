@@ -47,7 +47,7 @@ public class ShortUrlController {
 	    public ResponseEntity<ShortenResponse> shorten(@RequestBody ShortenRequest req, @RequestHeader(value = "Host", required = false) String host) {
 	        String baseHost = (host == null || host.isBlank()) ? "localhost:8081" : host;
 	        ShortUrl mapping = shortUrlService.shorten(req.originalUrl(), baseHost);
-	        String result = baseHost + "/r/" + mapping.getShortUrl();
+	        String result = baseHost + "/api/r/" + mapping.getShortUrl();
 	        System.out.println("Handled by port: " + serverPort);
 
 	        return ResponseEntity.ok(new ShortenResponse(result, mapping.getOriginalUrl()));
@@ -74,7 +74,7 @@ public class ShortUrlController {
 	        return shortUrlService.findByShort(token)
 	                .map(m -> {
 	                    try {
-	                        String shortLink = "http://" + baseHost + "/r/" + m.getShortUrl();
+	                        String shortLink = "http://" + baseHost + "/api/r/" + m.getShortUrl();
 	                        byte[] png = generateQrPng(shortLink, size);
 	                        HttpHeaders headers = new HttpHeaders();
 	                        headers.set("Content-Type", "image/png");
